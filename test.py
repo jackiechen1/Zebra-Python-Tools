@@ -1,52 +1,35 @@
+import tkinter as tk
 from tkinter import *
-import numpy as np
-def test():
-    list = [[0,0,0,0], [0, 0, 0, 0], [0, 0, 0, 0]]
-    a = len(list)
-    length = 300//a
-    ws = Tk()
-    ws.geometry("1000x800")
+import random
 
-    list_table_rendering = []
-    default_font = ("Helvetica", 8)
-    class table_rendering:
-        element_size = 4
-        source1_color = "#D97E4A"
-        source2_color = "#D97E4A"
-        destination_color = "#D97E4A"
-        default_color = "#D97E4A"
-        bits = 32
-        square_width = 30 # if 64 width =15
-        square_height =30
+class Example(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.ticker = tk.Text(height=1, wrap="none")
+        self.ticker.pack(side="top", fill="x")
 
-    canvas = Canvas(ws, width=1000, height=800, bg="#7698A6")
-    canvas.pack(side=RIGHT)
-    table = table_rendering()
-    for i in range(a):
-        y = i * table.square_height
-        for j in range(table.bits):
-            x = j * table.square_width
-            canvas.create_rectangle(x, y, x+table.square_width, y+table.square_height, fill="#D97E4A",outline = 'black')
-           # canvas.create_text(x+10,y+10,text = str(32-j),fill = 'black',font = default_font)
+        self.ticker.tag_configure("up", foreground="green")
+        self.ticker.tag_configure("down", foreground="red")
+        self.ticker.tag_configure("event", foreground="black")
 
-    def displayIndex():
-        for j in range(table.bits):
-            if not j%table.element_size:
-                x = j*table.square_width
-                canvas.create_text(x+10,10,text = str(table.bits-j-1),fill = 'black',font = default_font)
-    displayIndex()
-    ws.mainloop()
+        self.data = ["AAPL", "GOOG", "MSFT"]
+        self.after_idle(self.tick)
 
-def AssignArray(ExecSize,s,v,w,h,t,table,bits,row):
-    # Assign Array value based on Gen assemblly rules
-    for i in range(ExecSize):
-        position = (s+(i/w)*v+i%w*h)*t/8
-        if position>bits:
-            position-=bits #second row
-            table[row + 1:position + t / 8, i] = 1
-        else:
-            table[row:position + t / 8, i] = 1
-    return table
-table = np.zeros((4,32))
-table = AssignArray(8,1,4,1,0,8,table,32,1)
-print(table)
+    def tick(self):
+        symbol = self.data.pop(0)
+        self.data.append(symbol)
+
+        n = random.randint(-1,1)
+        tag = {-1: "down", 0: "even", 1: "up"}[n]
+
+        self.ticker.configure(state="normal")
+        self.ticker.insert("end", " %s %s" % (symbol, n), tag)
+        self.ticker.see("end")
+        self.ticker.configure(state="disabled")
+        self.after(1000, self.tick)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    Example(root).pack(fill="both", expand=True)
+    root.mainloop()
+
