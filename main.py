@@ -1,16 +1,16 @@
-
-
-import numpy as np
-from parse import *
-from table import *
 from gui import *
-from test import *
-
-
+# Last modify by Zhongyi Jiang
+# Original web version:
+# Update web version: https://jackiechen1.github.io/zebratest.github.io/
+# Todo list:
+# 1. prediction usage
+# 2. flag modifier usage
+# 3. saturation/ source modifier, including - ~ sat abs
+# 4. if and else support
+# 6. check constraint
+# 7. example text label
+# 8. more widgets options
+# 9. overlap condition
 if __name__ == '__main__':
-    genobj = parse_one_line("mov (16|M8)        r45.0<1>:uw   r95.0<8;8,1>:ud r97.0<1;1,0>:ud")
-    generateTable = TableChart()
-    generateTable.AssignNewObj(genobj)
-    for i in range(len(generateTable.tableNpArray)):
-        PrinTable(generateTable.tableNpArray[i], generateTable.tableRegNumber[i],64)
-        print("===================================================================================================================================================================================================")
+    MainGui = GUI()
+    MainGui.run()

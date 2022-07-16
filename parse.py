@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 datatype_bytes_conversion = {
     "b": 1,
     "ub": 1,
@@ -30,8 +32,7 @@ def ThrowGrammarError(line, error):
 
 
 def ThrowErrorMessage(message):
-    print(message)
-    return
+    messagebox.showerror('Error message', message)
 
 
 class Source:
@@ -249,7 +250,7 @@ def parse_one_line(line):
 
     # skip comments
     if oneline[0] == '/' and oneline[1] == '/':
-        return None,None
+        return None, None
 
     genAssemblyObj = GenAssembly()
     lineLabel = []
@@ -274,8 +275,6 @@ def parse_one_line(line):
         lineLabel.append(oneline[BeforeSource1:BeforeSource2])
 
     line = parseSource(line, genAssemblyObj, 2)
-
-
 
     if not line:
         BeforeFlag = len(oneline)

@@ -1,14 +1,8 @@
-import numpy as np
 from tkinter import *
-
-import table
 from table import *
 
 Bits = ["32 bits", "64 bits"]
 
-Types = ["BugFix", "Feature", "Refactor", "Performance", "Workaround",
-         "Revert", "Documentation", "Tools"]
-# maybe S,V, H, W
 ExampleText = """// This example shows a operation moving 8 elements from r7 to r11
     add (8|M0)               r11.0<1>:ud   r7.0<1;1,0>:ud r101.0<1;1,0>:ud
     // Next example shows moving 16 elements from r7 to r11
@@ -28,7 +22,7 @@ class GUI:
     def visualize(self):
         self.softClean()
         inputText = self.text_input.get("1.0", "end")
-        self.genobjs,self.command_labels = parse_lines(inputText)
+        self.genobjs, self.command_labels = parse_lines(inputText)
         if not len(self.genobjs):
             return
         self.MaxCommand = len(self.genobjs)
@@ -36,6 +30,7 @@ class GUI:
             self.nextButton.configure(state=NORMAL)
         self.renderTable()
 
+    # Soft clean do not clean the text input
     def softClean(self):
         self.genobjs = []
         self.command_labels = []
@@ -73,7 +68,8 @@ class GUI:
         self.renderTable()
 
     def renderTable(self):
-
+        for widget in self.command_label.winfo_children():
+            widget.destroy()
         self.drawBackgroundCanvas()
         self.table.AssignNewObj(self.genobjs[self.currentCommand])
         self.drawRegion()
@@ -81,21 +77,24 @@ class GUI:
         self.UpdateCommandLabel()
         return
 
-    widths = 1500
+    widths = 1500  # widths and heights of Main windows
     heights = 900
     main_window = Tk()
     default_font = ("Helvetica", 8)
     default_font_big = ("Helvetica", 20, "bold")
     default_font_bold_ital = ("Helvetica", 10, "bold", "italic")
-    currentCommand = 0
+    currentCommand = 0  # Index of current command
     MaxCommand = 1
     genobjs = []  # A list of gen Assembly object
-    command_labels = []
+    command_labels = []  # A list of list of command labels
+    table = TableChart()
+
     # Label and Text
     text_input = Text(width=int(widths / 12.0),
                       height=int(heights / 40.0))  # .get() using try and except ,delete() .insert()
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
     command_label = Label()
+
     # Button
     visualizeButton = Button()
     cleanButton = Button()
@@ -104,7 +103,7 @@ class GUI:
     nextButton = Button()
 
     # Canvas
-    canvas = Canvas(main_window, width=870, height=350, bg="#7698A6")
+    canvas = Canvas(main_window, width=870, height=350, bg="#C5c5c5")
 
     def __init__(self):
         # Initialize windows
@@ -128,23 +127,22 @@ class GUI:
         # Labels and text
         self.main_label.pack()
         self.text_input.place(x=200, y=100)
-        # self.command_label.place(x=200,y=self.heights/2-50)
+
         # Place Button
-        self.visualizeButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0))
-        self.cleanButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 100)
-        self.exampleButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 200)
+        self.visualizeButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 50)
+        self.cleanButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 150)
+        self.exampleButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 250)
         self.previousButton.place(x=50, y=int(self.heights * 3 / 4.0))
         self.nextButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights * 3 / 4.0))
 
-        # For placing Labels and ScrolledText
+        # Main window
         self.main_window.minsize(width=self.widths, height=self.heights)
         self.main_window.geometry("+300+100")
 
         # Canvas
         self.canvas.place(x=200, y=int(self.heights / 2))
 
-    table = TableChart()
-
+    # Draw background grey canvas
     def drawBackgroundCanvas(self):
         for i in range(15):
             y = i * self.table.square_height
@@ -153,6 +151,7 @@ class GUI:
                 self.canvas.create_rectangle(x, y, x + self.table.square_width, y + self.table.square_height,
                                              fill="#C5c5c5", outline='black')
 
+    # Draw three regions (source1, source2, destination)
     def drawRegion(self):
         tableNumber = self.table.tableRegNumber[0][2]
         previousRow = 0
@@ -173,6 +172,7 @@ class GUI:
                                         font=self.default_font_bold_ital)
             previousRow += (M + 1)
 
+    # Display the bit index, range from 0 to 32/64, stride by element size
     def displayBitIndex(self):
         # Display the bit index
         for j in range(self.table.bits):
@@ -181,6 +181,7 @@ class GUI:
                 self.canvas.create_text(x + 10, 10, text=str(self.table.bits - j - 1), fill='black',
                                         font=self.default_font)
 
+    # Update command label after switching to a new command
     def UpdateCommandLabel(self):
         # data[0] text before destination
         # data[1] destination
@@ -215,9 +216,3 @@ class GUI:
     def run(self):
         self.packElements()
         self.main_window.mainloop()
-
-
-if __name__ == '__main__':
-    MainGui = GUI()
-
-    MainGui.run()
