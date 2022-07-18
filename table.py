@@ -65,10 +65,13 @@ def UpdateTable(obj, regionType, table, row, bits):
 
 # Sort the table list so that the table array will order from small registers to large registers
 def sortTable(tableArray, tableTuple):
-    def simpleSwap(swapList, pos1, pos2):
+    def simpleSwap(swapList, pos1, pos2,reg):
         get = swapList[pos1], swapList[pos2]
         swapList[pos2], swapList[pos1] = get
-
+        if reg: # keep the regeister table index
+            reg1 = swapList[pos2][2]
+            swapList[pos2][2] = swapList[pos1][2]
+            swapList[pos1][2] = reg1
     i = 0
     while i < len(tableArray):
         # One giant table
@@ -80,8 +83,8 @@ def sortTable(tableArray, tableTuple):
             order = np.array([tableTuple[i][0], tableTuple[i + 1][0]])
             ArgMin = np.argmin(order)
             if ArgMin:
-                simpleSwap(tableArray, i, i + 1)
-                simpleSwap(tableTuple, i, i + 1)
+                simpleSwap(tableArray, i, i + 1,False)
+                simpleSwap(tableTuple, i, i + 1,True)
             i += 2
 
         # Three table
@@ -89,13 +92,13 @@ def sortTable(tableArray, tableTuple):
             order = np.array([tableTuple[i][0], tableTuple[i + 1][0], tableTuple[i + 2][0]])
             ArgMin = np.argmin(order)
             if ArgMin != 0:
-                simpleSwap(tableArray, i, i + ArgMin)
-                simpleSwap(tableTuple, i, i + ArgMin)
+                simpleSwap(tableArray, i, i + ArgMin,False)
+                simpleSwap(tableTuple, i, i + ArgMin,True)
                 order = np.array([tableTuple[i + 1][0], tableTuple[i + 2][0]])
                 ArgMin = np.argmin(order)
                 if ArgMin:
-                    simpleSwap(tableArray, i + 1, i + 2)
-                    simpleSwap(tableTuple, i + 1, i + 2)
+                    simpleSwap(tableArray, i + 1, i + 2,False)
+                    simpleSwap(tableTuple, i + 1, i + 2,True)
             i += 3
 
 
@@ -114,13 +117,17 @@ class TableChart:
         self.genAssemblyObj = GenAssembly()
 
     # Assign a new GenAssembly object to generate table
-    def AssignNewObj(self, genObj):
+    def AssignNewObj(self, genObj,bits):
+        global numberOfBits
+        numberOfBits = bits
         self.tableNpArray = []
         self.tableRegNumber = []
         self.numberOfSource = 1
-        self.bits = numberOfBits
+        self.bits = bits
         if self.bits == 64:
-            self.square_width = 15
+            self.square_width = 12.5
+        else:
+            self.square_width = 25
         self.genAssemblyObj = genObj
 
         # Two Source case
@@ -155,27 +162,22 @@ class TableChart:
                 GeneratedTable = UpdateTable(self.genAssemblyObj, 3, GeneratedTable, destinationRow, self.bits)
 
                 self.tableNpArray.append(GeneratedTable)
-                self.tableRegNumber.append((StartIndex, StartIndex + difference + 2, 0))
+                self.tableRegNumber.append([StartIndex, StartIndex + difference + 2, 0])
 
             else:  # Two regions
                 Table1 = np.full((4, self.bits), colorMap[0])
                 Table2 = np.full((4, self.bits), colorMap[0])
 
-                Table1 = AssignArray(self.genAssemblyObj.execinfo.ExecSize, self.genAssemblyObj.source1.offset,
-                                     self.genAssemblyObj.source1.V, self.genAssemblyObj.source1.W,
-                                     self.genAssemblyObj.source1.H,
-                                     self.element_size, Table1, self.bits, 1, True)
-                Table2 = AssignArray(self.genAssemblyObj.execinfo.ExecSize, self.genAssemblyObj.destination.offset,
-                                     0, 0, self.genAssemblyObj.destination.H,
-                                     self.element_size, Table2, self.bits, 1, False)
+                Table1 = UpdateTable(self.genAssemblyObj,1,Table1,1,self.bits)
+                Table2 = UpdateTable(self.genAssemblyObj,3,Table2,1,self.bits)
 
                 self.tableNpArray.append(Table1)
                 self.tableNpArray.append(Table2)
-                self.tableRegNumber.append((self.genAssemblyObj.source1.reg - 1,
-                                            self.genAssemblyObj.source1.reg + 4, 1))
+                self.tableRegNumber.append([self.genAssemblyObj.source1.reg - 1,
+                                            self.genAssemblyObj.source1.reg + 4, 1])
                 # Start index leave one more extra row before the first row
                 self.tableRegNumber.append(
-                    (self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 4, 0))
+                    [self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 4, 0])
 
         # At most three tables case
         else:
@@ -188,7 +190,7 @@ class TableChart:
                                  self.genAssemblyObj.destination.reg) - 1
                 MaxDiff = max(self.genAssemblyObj.source1.reg, self.genAssemblyObj.source2.reg,
                               self.genAssemblyObj.destination.reg) - startIndex
-                # Fullfill the numpy array by the color map value
+                # Fulfill the numpy array by the color map value
                 GeneratedTable = np.full((MaxDiff + 4, self.bits), colorMap[0])
                 GeneratedTable = UpdateTable(self.genAssemblyObj, 3, GeneratedTable,
                                              self.genAssemblyObj.destination.reg - startIndex, self.bits)
@@ -197,7 +199,7 @@ class TableChart:
                 GeneratedTable = UpdateTable(self.genAssemblyObj, 2, GeneratedTable,
                                              self.genAssemblyObj.source2.reg - startIndex, self.bits)
                 self.tableNpArray.append(GeneratedTable)
-                self.tableRegNumber.append((startIndex, startIndex + MaxDiff + 3, 0))
+                self.tableRegNumber.append([startIndex, startIndex + MaxDiff + 3, 0])
             elif differenceS1S2 <= 5 or differenceS2D1 <= 5 or differenceS1D1 <= 5:
                 # Two tables, one contains two regions, the other contains one region
                 MinDiff = min(differenceS1S2, differenceS2D1, differenceS1D1)
@@ -210,12 +212,12 @@ class TableChart:
                                          self.genAssemblyObj.source1.reg - MinIndex + 1, self.bits)
                     Table1 = UpdateTable(self.genAssemblyObj, 2, Table1,
                                          self.genAssemblyObj.source2.reg - MinIndex + 1, self.bits)
-                    self.tableRegNumber.append((MinIndex - 1, MinIndex + differenceS1S2, 1))
+                    self.tableRegNumber.append([MinIndex - 1, MinIndex + differenceS1S2, 1])
 
                     Table2 = UpdateTable(self.genAssemblyObj, 3, Table2,
                                          1, self.bits)
                     self.tableRegNumber.append(
-                        (self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 3, 0))
+                        [self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 3, 0])
 
                 elif differenceS1D1 <= 5:
                     MinIndex = min(self.genAssemblyObj.source1.reg, self.genAssemblyObj.destination.reg)
@@ -223,24 +225,24 @@ class TableChart:
                                          self.genAssemblyObj.source1.reg - MinIndex + 1, self.bits)
                     Table1 = UpdateTable(self.genAssemblyObj, 3, Table1,
                                          self.genAssemblyObj.destination.reg - MinIndex + 1, self.bits)
-                    self.tableRegNumber.append((MinIndex - 1, MinIndex + differenceS1D1, 1))
+                    self.tableRegNumber.append([MinIndex - 1, MinIndex + differenceS1D1, 1])
 
                     Table2 = UpdateTable(self.genAssemblyObj, 2, Table2,
                                          1, self.bits)
                     self.tableRegNumber.append(
-                        (self.genAssemblyObj.source2.reg - 1, self.genAssemblyObj.source2.reg + 3, 0))
+                        [self.genAssemblyObj.source2.reg - 1, self.genAssemblyObj.source2.reg + 3, 0])
                 else:
                     MinIndex = min(self.genAssemblyObj.source2.reg, self.genAssemblyObj.destination.reg)
                     Table1 = UpdateTable(self.genAssemblyObj, 2, Table1,
                                          self.genAssemblyObj.source2.reg - MinIndex + 1, self.bits)
                     Table1 = UpdateTable(self.genAssemblyObj, 3, Table1,
                                          self.genAssemblyObj.destination.reg - MinIndex + 1, self.bits)
-                    self.tableRegNumber.append((MinIndex - 1, MinIndex + differenceS2D1, 1))
+                    self.tableRegNumber.append([MinIndex - 1, MinIndex + differenceS2D1, 1])
 
                     Table2 = UpdateTable(self.genAssemblyObj, 1, Table2,
                                          1, self.bits)
                     self.tableRegNumber.append(
-                        (self.genAssemblyObj.source1.reg - 1, self.genAssemblyObj.source1.reg + 3, 0))
+                        [self.genAssemblyObj.source1.reg - 1, self.genAssemblyObj.source1.reg + 3, 0])
                 self.tableNpArray.append(Table1)
                 self.tableNpArray.append(Table2)
             else:
@@ -261,8 +263,8 @@ class TableChart:
                 self.tableNpArray.append(Table3)
 
                 self.tableRegNumber.append(
-                    (self.genAssemblyObj.source1.reg - 1, self.genAssemblyObj.source1.reg + 4, 2))
+                    [self.genAssemblyObj.source1.reg - 1, self.genAssemblyObj.source1.reg + 4, 2])
                 self.tableRegNumber.append(
-                    (self.genAssemblyObj.source2.reg - 1, self.genAssemblyObj.source2.reg + 4, 1))
+                    [self.genAssemblyObj.source2.reg - 1, self.genAssemblyObj.source2.reg + 4, 1])
                 self.tableRegNumber.append(
-                    (self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 4, 0))
+                    [self.genAssemblyObj.destination.reg - 1, self.genAssemblyObj.destination.reg + 4, 0])

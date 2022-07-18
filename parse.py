@@ -23,8 +23,8 @@ immediateSourceOperands = {
 }
 MnemonicList = ["add", "mov", "math.div"]
 conditionValueList = ["ze", "eq", "nz", "ne", "gt", "ge", "lt", "le"]
-numberOfBits = 32  # 32 bits or 64 bits
 
+from main import numberOfBits
 
 def ThrowGrammarError(line, error):
     message = "Unknown grammar syntax at " + line + "\n" + error

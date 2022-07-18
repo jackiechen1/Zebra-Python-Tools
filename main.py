@@ -8,9 +8,11 @@ from gui import *
 # 3. saturation/ source modifier, including - ~ sat abs
 # 4. if and else support
 # 6. check constraint
-# 7. example text label
 # 8. more widgets options
 # 9. overlap condition
+
+numberOfBits = 32  # 32 bits or 64 bits
+
 if __name__ == '__main__':
     MainGui = GUI()
     MainGui.run()
