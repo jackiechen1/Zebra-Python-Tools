@@ -49,7 +49,7 @@ class Source:
 
     def __init__(self):
         self.modifiers = ''  # Source modifiers could be -,~,abs and so on
-        self.reg = -1  # reg number
+        self.reg = 0  # reg number
         self.offset = -1  # aka S
         self.V = -1  # Vertical stride
         self.W = -1  # Width
@@ -263,18 +263,12 @@ def parseSource(line, obj, order):  # Second source not require
 def parseImmediateSourceOperands(line, obj):
     if not line:
         return ""
-    comment = line.find("//")
-    if comment != -1:
-        line = line[0:comment]
     colon = line.find(':')
 
-    # Don't have an immediate Source Operands
-    if colon == -1:
-        return ""
-    if line[0:colon + 2] not in immediateSourceOperands.keys():
-        obj.immediateSourceOperands = immediateSourceOperands[line[0:colon + 2]]
-    else:
-        ThrowGrammarError(line, "Can't recognize immediate source operands")
+    # Ignore the source reg if we find an immdiate source operands
+    if colon != -1:
+        obj.source1.constant = True
+        obj.source2.constant = True
     return ""
 
 

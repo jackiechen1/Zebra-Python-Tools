@@ -169,6 +169,8 @@ class TableChart:
         # At most Two region case
         if self.numberOfSource == 1:
             difference = abs(self.genAssemblyObj.source1.reg - self.genAssemblyObj.destination.reg)
+            if self.genAssemblyObj.source1.constant:
+                difference = 0
             if difference <= 5:  # close enough so only generate one table
                 GeneratedTable = np.full((difference + 4, self.bits), colorMap[0])
                 StartIndex = min(self.genAssemblyObj.source1.reg, self.genAssemblyObj.destination.reg) - 1

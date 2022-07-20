@@ -191,7 +191,7 @@ class GUI:
                                                  self.table.square_height * (i + 1 + previousRow),
                                                  self.table.square_width * (j + 1),
                                                  self.table.square_height * (i + 2 + previousRow),
-                                                 fill=fill_color, outline='black')
+                                                 fill=fill_color, outline='black',width=1)
                 y = (i + 1.5 + previousRow) * self.table.square_height
                 self.regNum = self.canvas.create_text(815, y, text="r" + str(
                     self.table.tableRegNumber[t][0] + i),
