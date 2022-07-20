@@ -12,9 +12,9 @@ datatype_bytes_conversion = {
     "hf": 2,
     "f": 4,
     "df": 8,
-    "uv": -1,  # These three types are special type which needs to define separately
-    "v": -1,
-    "vf": -1
+    "uv": 0,  # These three types are special type which needs to define separately
+    "v": 0,
+    "vf": 0
 }
 immediateSourceOperands = {
     "-3.14159:f": 1,  # Immediate 32-bit float
@@ -24,7 +24,8 @@ immediateSourceOperands = {
 MnemonicList = ["add", "mov", "math.div"]
 conditionValueList = ["ze", "eq", "nz", "ne", "gt", "ge", "lt", "le"]
 
-from main import numberOfBits
+from main import numberOfBtyes
+
 
 def ThrowGrammarError(line, error):
     message = "Unknown grammar syntax at " + line + "\n" + error
@@ -44,6 +45,7 @@ class Source:
     W = 1  # Width
     H = 0  # Horizontal stride
     datatype = -1  # units in bits
+    constant = False  # if source is a constant
 
     def __init__(self):
         self.modifiers = ''  # Source modifiers could be -,~,abs and so on
@@ -88,16 +90,22 @@ class FlagModify:  # Or Condition modifiers
 
 
 def parsePrediction(line, obj):  # Not require
-    if line[0] != '[':
+    if not line:
+        return ""
+    if line[0] != '[' and line[0] != '(':
         return line
     rightBracket = line.find(']')
     if rightBracket == -1:
-        ThrowGrammarError(line, "Can't recognize prediction pattern")
+        rightBracket = line.find(')')
+        if rightBracket == -1:
+            ThrowGrammarError(line, "Can't recognize prediction pattern")
     obj.predAndMask = line[1:rightBracket]
     return line[rightBracket + 1:]
 
 
 def parseMnemonic(line, obj):
+    if not line:
+        return ""
     bracket = line.find('(')
     if bracket == -1:
         ThrowGrammarError(line, "Can't find ExecutionMask")
@@ -106,9 +114,12 @@ def parseMnemonic(line, obj):
         return line[bracket:]
     else:
         ThrowGrammarError(line, "Fail parsing Mnemonic operator")
+        return ""
 
 
 def parseExecutionMask(line, obj):
+    if not line:
+        return ""
     leftBracket = line.find('(')
     rightBracket = line.find(')')
     bar = line.find('|')
@@ -118,9 +129,12 @@ def parseExecutionMask(line, obj):
         return line[rightBracket + 1:]
     except(Exception,):
         ThrowGrammarError(line, "Fail parsing ExecutionMask")
+        return ""
 
 
 def parseFlagModifier(line, obj):  # Not require
+    if not line:
+        return ""
     if line[0] != '[':
         return line
     leftBracket = line.find('(')
@@ -138,7 +152,10 @@ def parseFlagModifier(line, obj):  # Not require
         ThrowGrammarError(line, "Can't parse Flag Modifier")
 
 
+
 def parseDestination(line, obj):
+    if not line:
+        return ""
     regexStart = line.find('r')
     leftBracket = line.find('<')
     rightBracket = line.find('>')
@@ -171,6 +188,8 @@ def parseDestination(line, obj):
 
 
 def parseSource(line, obj, order):  # Second source not require
+    if not line:
+        return ""
     regexStart = line.find('r')
     leftBracket = line.find('<')
     rightBracket = line.find('>')
@@ -180,7 +199,20 @@ def parseSource(line, obj, order):  # Second source not require
     comma = line.find(',')
     endIndex = -1
     if regexStart == -1 or leftBracket == -1 or rightBracket == -1 or dotPos == -1 or colon == -1 or semicolon == -1 or comma == -1:
-        if order == 2:
+        # source is a constant
+        if colon != -1:
+            if order == 1:
+                obj.source1.constant = True
+            else:
+                obj.source2.constant = True
+            if line[colon + 1:colon + 2] in datatype_bytes_conversion.keys():
+                endIndex = colon + 1
+            elif line[colon + 1:colon + 3] in datatype_bytes_conversion.keys():
+                endIndex = colon + 2
+            else:
+                ThrowGrammarError(line, "Can't recognize datatype")
+            return line[endIndex + 1:]
+        elif order == 2:
             return line
         else:
             ThrowGrammarError(line, "Fail to recognize region pattern")
@@ -229,6 +261,8 @@ def parseSource(line, obj, order):  # Second source not require
 
 
 def parseImmediateSourceOperands(line, obj):
+    if not line:
+        return ""
     comment = line.find("//")
     if comment != -1:
         line = line[0:comment]
@@ -244,14 +278,19 @@ def parseImmediateSourceOperands(line, obj):
     return ""
 
 
-def parse_one_line(line):
+def parse_one_line(line, comments):
     # remove space
     oneline = line.replace(" ", "")
 
     # skip comments
     if oneline[0] == '/' and oneline[1] == '/':
-        return None, None
-
+        return None, None, comments
+    elif oneline[0] == '/' and oneline[1] == '*':
+        return None, None, True
+    elif oneline.find("*/")!=-1:
+        return None, None, False
+    elif comments:
+        return None, None, True
     genAssemblyObj = GenAssembly()
     lineLabel = []
     # parse line in order and save critical segmentation for label
@@ -286,16 +325,17 @@ def parse_one_line(line):
         lineLabel.append(line)
         parseImmediateSourceOperands(line, genAssemblyObj)
 
-    return genAssemblyObj, lineLabel
+    return genAssemblyObj, lineLabel,comments
 
 
 def parse_lines(lines):
     lines_list = lines.split('\n')
     objs = []
     lineLabelList = []
+    comments = False  # Whether current line within a comment section
     for line in lines_list:
         if line:
-            obj, lineLabel = parse_one_line(line)
+            obj, lineLabel, comments = parse_one_line(line, comments)
             if obj:
                 objs.append(obj)
                 lineLabelList.append(lineLabel)
@@ -345,7 +385,7 @@ class GenAssembly:
                     "If VertStride = HorzStride = 0, Width must be 1 regardless of the value of ExecSize.")
             elif self.destination.H == 0:
                 ThrowErrorMessage("Dst.HorzStride must not be 0.")
-            elif ((self.execinfo.ExecSize / W) * V + self.execinfo.ExecSize % W * H) * datatype > numberOfBits * 2:
+            elif ((self.execinfo.ExecSize / W) * V + self.execinfo.ExecSize % W * H) * datatype > numberOfBtyes * 2:
                 ThrowErrorMessage(" Crossing more than 2 registers")
 
         # ??? VertStride must be used to cross GRF register boundaries. This rule implies that elements within a 'Width' cannot cross GRF boundaries.

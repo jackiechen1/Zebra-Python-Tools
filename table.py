@@ -65,9 +65,13 @@ def AssignArray(ExecSize, s, v, w, h, t, table, bits, row, SourceOrDestination):
 # Update the table based on type, just a helper
 def UpdateTable(obj, regionType, table, row, bits):
     if regionType == 1:  # Source1
+        if obj.source1.constant:
+            return table
         update = AssignArray(obj.execinfo.ExecSize, obj.source1.offset, obj.source1.V, obj.source1.W, obj.source1.H,
                              obj.source1.datatype, table, bits, row, 1)
     elif regionType == 2:  # Source2
+        if obj.source2.constant:
+            return table
         update = AssignArray(obj.execinfo.ExecSize, obj.source1.offset, obj.source1.V, obj.source1.W, obj.source1.H,
                              obj.source1.datatype, table, bits, row, 2)
     else:  # destination
@@ -157,6 +161,11 @@ class TableChart:
 
     # Generate numpy array based on the rules
     def GenerateArray(self):
+        '''
+        if self.genAssemblyObj.source1.constant and self.genAssemblyObj.source2.constant:
+            # only d
+        elif self.genAssemblyObj.source1.constant
+        '''
         # At most Two region case
         if self.numberOfSource == 1:
             difference = abs(self.genAssemblyObj.source1.reg - self.genAssemblyObj.destination.reg)
@@ -171,6 +180,7 @@ class TableChart:
                 else:
                     destinationRow = 1
                     sourceRow = destinationRow + difference
+
                 GeneratedTable = UpdateTable(self.genAssemblyObj, 1, GeneratedTable, sourceRow, self.bits)
                 GeneratedTable = UpdateTable(self.genAssemblyObj, 3, GeneratedTable, destinationRow, self.bits)
 

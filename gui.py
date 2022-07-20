@@ -78,7 +78,7 @@ class GUI:
         for widget in self.command_label.winfo_children():
             widget.destroy()
 
-        self.table.AssignNewObj(self.genobjs[self.currentCommand], self.bits.get())
+        self.table.AssignNewObj(self.genobjs[self.currentCommand], self.Bytes.get())
         self.drawBackgroundCanvas()
         self.drawRegion()
         self.displayBitIndex()
@@ -105,7 +105,7 @@ class GUI:
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
     command_label = Label()  # for demonstrating the command in different color panel
     example_label = Label(text="", fg="black", font=default_font_bold_ital)  # display the example comments
-    bits_selection_label = Label(master=RadioFrame, text="Bits select", fg="black", font=default_font)
+    Bytes_selection_label = Label(master=RadioFrame, text="Bits select", fg="black", font=default_font)
 
     # Button
     visualizeButton = Button()
@@ -118,10 +118,10 @@ class GUI:
     canvas = Canvas(main_window, width=870, height=350, bg="#C5c5c5")
     regNum = canvas.create_text(0, 0, )
 
-    # Bits selection
-    bits = IntVar(None, 32)
-    bits1 = Radiobutton()
-    bits2 = Radiobutton()
+    # Bytes selection
+    Bytes = IntVar(None, 32)
+    Bytes1 = Radiobutton()
+    Bytes2 = Radiobutton()
 
     def __init__(self):
         # Initialize windows
@@ -138,8 +138,8 @@ class GUI:
                                      borderwidth=5, state=DISABLED)
         self.nextButton = Button(text="Next", width=8, height=2, command=self.next, relief=RAISED, borderwidth=5,
                                  state=DISABLED)
-        self.bits1 = Radiobutton(master=self.RadioFrame, text="32 bits", variable=self.bits, value=32)
-        self.bits2 = Radiobutton(master=self.RadioFrame, text="64 bits", variable=self.bits, value=64)
+        self.Bytes1 = Radiobutton(master=self.RadioFrame, text="32 Bytes", variable=self.Bytes, value=32)
+        self.Bytes2 = Radiobutton(master=self.RadioFrame, text="64 Bytes", variable=self.Bytes, value=64)
 
     def packElements(self):
         self.main_window.title("Gen Assembly Visualize Tool")
@@ -164,9 +164,9 @@ class GUI:
         self.canvas.place(x=200, y=int(self.heights / 2))
 
         # Radios
-        self.bits_selection_label.pack()
-        self.bits1.pack()
-        self.bits2.pack()
+        self.Bytes_selection_label.pack()
+        self.Bytes1.pack()
+        self.Bytes2.pack()
         self.RadioFrame.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 350)
 
     # Draw background grey canvas

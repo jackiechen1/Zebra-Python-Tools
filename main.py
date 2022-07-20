@@ -11,7 +11,7 @@ from gui import *
 # 8. more widgets options
 # 9. overlap condition
 
-numberOfBits = 32  # 32 bits or 64 bits
+numberOfBtyes = 32  # 32 bits or 64 bits
 
 if __name__ == '__main__':
     MainGui = GUI()
