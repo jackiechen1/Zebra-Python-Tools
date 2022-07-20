@@ -38,7 +38,7 @@ def ThrowErrorMessage(message):
 class Source:
     # e.g. -r5.0<0;1,0>:f
     modifiers = ''  # Source modifiers could be -,~,abs and so on
-    reg = 5
+    reg = 5  # reg number
     offset = 0  # aka S
     V = 1  # Vertical stride
     W = 1  # Width
@@ -73,7 +73,7 @@ class Destination:
 
 class ExecInfo:
     # e.g. (8|M0)
-    ExecSize = 8
+    ExecSize = 8  # Element size
     mask = 0  # Idle for now
 
     def __init__(self):

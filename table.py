@@ -28,12 +28,19 @@ def PrinTable(table, tableReg, bits):
     print('\n')
 
 
-# Assign the tabel array based on assembly rules s: offset, v: vertical stride, w: width, h: height, t: datasize(unit
-# in bytes), bits: 32 or 64, row: assigning row index in table, SourceOrDestination: 1->source1, 2->source2, 3->destination
+# Assign the tabel array based on assembly rules
+# s: offset,
+# v: vertical stride,
+# w: width,
+# h: height,
+# t: datasize(unit in bytes),
+# bits: 32 or 64,
+# row: assigning row index in table,
+# SourceOrDestination: 1->source1, 2->source2, 3->destination
 def AssignArray(ExecSize, s, v, w, h, t, table, bits, row, SourceOrDestination):
     # Assign Array value based on Gen assembly rules
     for i in range(ExecSize):
-        if SourceOrDestination <= 2:  # True for Source, False for Destination
+        if SourceOrDestination <= 2:  # Source case
             position = int((s + (i // w) * v + mod(i, w) * h) * t)
         else:
             position = (s + i * h) * t
@@ -41,11 +48,17 @@ def AssignArray(ExecSize, s, v, w, h, t, table, bits, row, SourceOrDestination):
             position -= bits
             right_index = bits - position
             left_index = right_index - t
-            table[row + 1, left_index:right_index] = colorMap[SourceOrDestination]
+            temp_table = table[row + 1, left_index:right_index]
+            temp_table = np.where(temp_table == colorMap[0],colorMap[SourceOrDestination],"#A49098")
+            table[row + 1, left_index:right_index] = temp_table
+            #table[row + 1, left_index:right_index] = colorMap[SourceOrDestination]
         else:
             right_index = bits - position
             left_index = right_index - t
-            table[row, left_index:right_index] = colorMap[SourceOrDestination]
+            temp_table = table[row , left_index:right_index]
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination], "#A49098")
+            table[row , left_index:right_index] = temp_table
+            #table[row, left_index:right_index] = colorMap[SourceOrDestination]
     return table
 
 

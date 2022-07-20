@@ -19,7 +19,8 @@ default_small_font = ("Helvetica", 8)
 default_font_big = ("Helvetica", 20, "bold")
 default_font_bold_ital = ("Helvetica", 10, "bold", "italic")
 
-table_size_corresponding = {32:default_font,64:default_small_font,}
+table_size_corresponding = {32: default_font, 64: default_small_font, }
+
 
 class GUI:
 
@@ -86,7 +87,6 @@ class GUI:
             self.example_label.config(text=ExampleModeLabels[self.currentCommand])
         return
 
-
     widths = 1500  # widths and heights of Main windows
     heights = 900
     main_window = Tk()
@@ -97,7 +97,7 @@ class GUI:
     command_labels = []  # A list of list of command labels
     table = TableChart()
     exampleMode = False
-    RadioFrame = Frame()
+    RadioFrame = Frame() # Switch bits
 
     # Label and Text
     text_input = Text(width=int(widths / 12.0),
@@ -205,7 +205,8 @@ class GUI:
         for j in range(self.table.bits):
             if not j % self.table.element_size:
                 x = j * self.table.square_width
-                self.canvas.create_text(x + 10-(self.table.bits-32)/16, 10, text=str(self.table.bits - j - 1), fill='black',
+                self.canvas.create_text(x + 10 - (self.table.bits - 32) / 16, 10, text=str(self.table.bits - j - 1),
+                                        fill='black',
                                         font=table_size_corresponding[self.table.bits])
 
     # Update command label after switching to a new command
@@ -240,6 +241,7 @@ class GUI:
 
         self.command_label.place(x=200, y=self.heights / 2 - 50)
 
+    # Update command labels
     def updateText(self):
         inputText = self.text_input.get("1.0", "end")
         self.genobjs, self.command_labels = parse_lines(inputText)
