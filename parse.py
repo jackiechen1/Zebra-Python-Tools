@@ -16,12 +16,9 @@ datatype_bytes_conversion = {
     "v": 0,
     "vf": 0
 }
-immediateSourceOperands = {
-    "-3.14159:f": 1,  # Immediate 32-bit float
-    "-1234:d": 2,  # Immediate 32-bit integer
-    "0x7654321:v": 3  # Packed integer vector
-}
-MnemonicList = ["add", "mov", "math.div"]
+
+MnemonicList1 = ["mov"]
+MnemonicList2 = ["add", "math.div"]
 conditionValueList = ["ze", "eq", "nz", "ne", "gt", "ge", "lt", "le"]
 
 from main import numberOfBtyes
@@ -49,7 +46,7 @@ class Source:
 
     def __init__(self):
         self.modifiers = ''  # Source modifiers could be -,~,abs and so on
-        self.reg = 0  # reg number
+        self.reg = 100  # reg number
         self.offset = -1  # aka S
         self.V = -1  # Vertical stride
         self.W = -1  # Width
@@ -109,7 +106,7 @@ def parseMnemonic(line, obj):
     bracket = line.find('(')
     if bracket == -1:
         ThrowGrammarError(line, "Can't find ExecutionMask")
-    if line[0:bracket] in MnemonicList:
+    if line[0:bracket] in MnemonicList1 or line[0:bracket] in MnemonicList2:
         obj.mnemonic = line[0:bracket]
         return line[bracket:]
     else:
@@ -199,12 +196,15 @@ def parseSource(line, obj, order):  # Second source not require
     comma = line.find(',')
     endIndex = -1
     if regexStart == -1 or leftBracket == -1 or rightBracket == -1 or dotPos == -1 or colon == -1 or semicolon == -1 or comma == -1:
-        # source is a constant
-        if colon != -1:
-            if order == 1:
-                obj.source1.constant = True
-            else:
-                obj.source2.constant = True
+        # Error case
+        if (order==1 and colon==-1) or (order==2 and colon==-1 and obj.mnemonic in MnemonicList1):
+            ThrowGrammarError(line, "Fail to recognize region pattern")
+        # No offset input
+        elif dotPos ==-1 and leftBracket!=-1 and regexStart!=-1 and leftBracket-regexStart<=4:
+            pass
+        # First source is a constant
+        elif order==1 and colon!=-1:
+            obj.source1.constant=True
             if line[colon + 1:colon + 2] in datatype_bytes_conversion.keys():
                 endIndex = colon + 1
             elif line[colon + 1:colon + 3] in datatype_bytes_conversion.keys():
@@ -212,10 +212,28 @@ def parseSource(line, obj, order):  # Second source not require
             else:
                 ThrowGrammarError(line, "Can't recognize datatype")
             return line[endIndex + 1:]
-        elif order == 2:
-            return line
+        elif order==2:
+            # Second source is a constant
+            if colon!=-1 and obj.mnemonic in MnemonicList2:
+                obj.source2.constant = True
+                if line[colon + 1:colon + 2] in datatype_bytes_conversion.keys():
+                    endIndex = colon + 1
+                elif line[colon + 1:colon + 3] in datatype_bytes_conversion.keys():
+                    endIndex = colon + 2
+                else:
+                    ThrowGrammarError(line, "Can't recognize datatype")
+                return line[endIndex + 1:]
+            # Don't need a second source
+            elif obj.mnemonic in MnemonicList1:
+                obj.source2.constant = True
+                return line
+            # Other cases happened
+            else:
+                ThrowErrorMessage("Bug in source code! Unexpected cases happened!")
+                return line[endIndex + 1:]
         else:
-            ThrowGrammarError(line, "Fail to recognize region pattern")
+            ThrowErrorMessage("Bug in source code! Unexpected cases happened!")
+            return line[endIndex + 1:]
     if line[0] == '-' or line[0] == '(' or line[0] == '~':
         if order == 1:
             obj.source1.modifiers = line[0:regexStart]
@@ -227,8 +245,13 @@ def parseSource(line, obj, order):  # Second source not require
     else:
         try:
             if order == 1:
-                obj.source1.reg = int(line[regexStart + 1: dotPos])
-                obj.source1.offset = int(line[dotPos + 1: leftBracket])
+                # No offset case
+                if dotPos==-1:
+                    obj.source1.offset = 0
+                    obj.source1.reg = int(line[regexStart + 1: leftBracket])
+                else:
+                    obj.source1.offset = int(line[dotPos + 1: leftBracket])
+                    obj.source1.reg = int(line[regexStart + 1: dotPos])
                 obj.source1.V = int(line[leftBracket + 1: semicolon])
                 obj.source1.W = int(line[semicolon + 1: comma])
                 obj.source1.H = int(line[comma + 1: rightBracket])
@@ -241,17 +264,22 @@ def parseSource(line, obj, order):  # Second source not require
                 else:
                     ThrowGrammarError(line, "Can't recognize datatype")
             else:
-                obj.source2.reg = int(line[regexStart + 1: dotPos])
-                obj.source2.offset = int(line[dotPos + 1: leftBracket])
+                # No offset case
+                if dotPos==-1:
+                    obj.source2.offset = 0
+                    obj.source2.reg = int(line[regexStart + 1: leftBracket])
+                else:
+                    obj.source2.offset = int(line[dotPos + 1: leftBracket])
+                    obj.source2.reg = int(line[regexStart + 1: dotPos])
                 obj.source2.V = int(line[leftBracket + 1: semicolon])
                 obj.source2.W = int(line[semicolon + 1: comma])
                 obj.source2.H = int(line[comma + 1: rightBracket])
-                if line[colon + 1: colon + 2] in datatype_bytes_conversion.keys():  # one char data type
-                    obj.source2.datatype = datatype_bytes_conversion[line[colon + 1: colon + 2]]
-                    endIndex = colon + 1
-                elif line[colon + 1: colon + 3] in datatype_bytes_conversion.keys():  # two char data type
+                if line[colon + 1: colon + 3] in datatype_bytes_conversion.keys():  # two char data type
                     obj.source2.datatype = datatype_bytes_conversion[line[colon + 1: colon + 3]]
                     endIndex = colon + 2
+                elif line[colon + 1: colon + 2] in datatype_bytes_conversion.keys():  # one char data type
+                    obj.source2.datatype = datatype_bytes_conversion[line[colon + 1: colon + 2]]
+                    endIndex = colon + 1
                 else:
                     ThrowGrammarError(line, "Can't recognize datatype")
 

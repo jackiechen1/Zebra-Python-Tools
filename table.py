@@ -7,6 +7,9 @@ colorMap = {
     1: "#F73f3a",  # Source1
     2: "#73f550",  # Source2
     3: "#50e1f5",  # Destination
+    4: "12",  # S1 S2 conflict
+    5: "13",  # S1 D1 conflict
+    6: "23",  # S2 D1 conflict
 }
 
 
@@ -44,21 +47,34 @@ def AssignArray(ExecSize, s, v, w, h, t, table, bits, row, SourceOrDestination):
             position = int((s + (i // w) * v + mod(i, w) * h) * t)
         else:
             position = (s + i * h) * t
-        if position >= bits:  # second row
-            position -= bits
-            right_index = bits - position
-            left_index = right_index - t
-            temp_table = table[row + 1, left_index:right_index]
-            temp_table = np.where(temp_table == colorMap[0],colorMap[SourceOrDestination],"#A49098")
-            table[row + 1, left_index:right_index] = temp_table
-            #table[row + 1, left_index:right_index] = colorMap[SourceOrDestination]
-        else:
-            right_index = bits - position
-            left_index = right_index - t
-            temp_table = table[row , left_index:right_index]
-            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination], "#A49098")
-            table[row , left_index:right_index] = temp_table
-            #table[row, left_index:right_index] = colorMap[SourceOrDestination]
+        rowPos = position // bits  # Index of rows
+        startPos = position % bits
+
+        right_index = bits - startPos
+        left_index = right_index - t
+        temp_table = table[row + rowPos, left_index:right_index]
+        if SourceOrDestination == 1:  # Source1 case
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[1], colorMap[SourceOrDestination],temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[2],
+                                      colorMap[4], colorMap[6])
+        elif SourceOrDestination == 2:  # Source2 case
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[2], colorMap[SourceOrDestination], temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[1],
+                                      colorMap[4], colorMap[6])
+        else: # Destination case
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[3], colorMap[SourceOrDestination], temp_table)
+            if colorMap[SourceOrDestination] not in temp_table:
+                temp_table = np.where(temp_table == colorMap[1],
+                                      colorMap[5], colorMap[6])
+        table[row + rowPos, left_index:right_index] = temp_table
     return table
 
 
@@ -82,13 +98,14 @@ def UpdateTable(obj, regionType, table, row, bits):
 
 # Sort the table list so that the table array will order from small registers to large registers
 def sortTable(tableArray, tableTuple):
-    def simpleSwap(swapList, pos1, pos2,reg):
+    def simpleSwap(swapList, pos1, pos2, reg):
         get = swapList[pos1], swapList[pos2]
         swapList[pos2], swapList[pos1] = get
-        if reg: # keep the regeister table index
+        if reg:  # keep the regeister table index
             reg1 = swapList[pos2][2]
             swapList[pos2][2] = swapList[pos1][2]
             swapList[pos1][2] = reg1
+
     i = 0
     while i < len(tableArray):
         # One giant table
@@ -100,8 +117,8 @@ def sortTable(tableArray, tableTuple):
             order = np.array([tableTuple[i][0], tableTuple[i + 1][0]])
             ArgMin = np.argmin(order)
             if ArgMin:
-                simpleSwap(tableArray, i, i + 1,False)
-                simpleSwap(tableTuple, i, i + 1,True)
+                simpleSwap(tableArray, i, i + 1, False)
+                simpleSwap(tableTuple, i, i + 1, True)
             i += 2
 
         # Three table
@@ -109,13 +126,13 @@ def sortTable(tableArray, tableTuple):
             order = np.array([tableTuple[i][0], tableTuple[i + 1][0], tableTuple[i + 2][0]])
             ArgMin = np.argmin(order)
             if ArgMin != 0:
-                simpleSwap(tableArray, i, i + ArgMin,False)
-                simpleSwap(tableTuple, i, i + ArgMin,True)
+                simpleSwap(tableArray, i, i + ArgMin, False)
+                simpleSwap(tableTuple, i, i + ArgMin, True)
                 order = np.array([tableTuple[i + 1][0], tableTuple[i + 2][0]])
                 ArgMin = np.argmin(order)
                 if ArgMin:
-                    simpleSwap(tableArray, i + 1, i + 2,False)
-                    simpleSwap(tableTuple, i + 1, i + 2,True)
+                    simpleSwap(tableArray, i + 1, i + 2, False)
+                    simpleSwap(tableTuple, i + 1, i + 2, True)
             i += 3
 
 
@@ -134,7 +151,7 @@ class TableChart:
         self.genAssemblyObj = GenAssembly()
 
     # Assign a new GenAssembly object to generate table
-    def AssignNewObj(self, genObj,bits):
+    def AssignNewObj(self, genObj, bits):
         global numberOfBits
         numberOfBits = bits
         self.tableNpArray = []
@@ -147,25 +164,31 @@ class TableChart:
             self.square_width = 25
         self.genAssemblyObj = genObj
 
+        self.element_size = max(genObj.source1.datatype, genObj.source2.datatype,
+                                genObj.destination.datatype)
+        if not genObj.source2.constant and genObj.source2.datatype!=-1:
+            self.numberOfSource = 2
+        '''
         # Two Source case
-        if genObj.source2.datatype != -1:
-            self.element_size = min(genObj.source1.datatype, genObj.source2.datatype,
+        if genObj.mnemonic in MnemonicList2:
+            self.element_size = max(genObj.source1.datatype, genObj.source2.datatype,
                                     genObj.destination.datatype)
+            
             self.numberOfSource = 2
 
         # One Source case
         else:
-            self.element_size = min(genObj.source1.datatype, genObj.destination.datatype)
+            self.element_size = max(genObj.source1.datatype, genObj.destination.datatype)
+        '''
+        # Prevent any other cases
+        if self.element_size <= 0:
+            self.element_size = 1
+
         self.GenerateArray()
         sortTable(self.tableNpArray, self.tableRegNumber)
 
     # Generate numpy array based on the rules
     def GenerateArray(self):
-        '''
-        if self.genAssemblyObj.source1.constant and self.genAssemblyObj.source2.constant:
-            # only d
-        elif self.genAssemblyObj.source1.constant
-        '''
         # At most Two region case
         if self.numberOfSource == 1:
             difference = abs(self.genAssemblyObj.source1.reg - self.genAssemblyObj.destination.reg)
@@ -193,8 +216,8 @@ class TableChart:
                 Table1 = np.full((4, self.bits), colorMap[0])
                 Table2 = np.full((4, self.bits), colorMap[0])
 
-                Table1 = UpdateTable(self.genAssemblyObj,1,Table1,1,self.bits)
-                Table2 = UpdateTable(self.genAssemblyObj,3,Table2,1,self.bits)
+                Table1 = UpdateTable(self.genAssemblyObj, 1, Table1, 1, self.bits)
+                Table2 = UpdateTable(self.genAssemblyObj, 3, Table2, 1, self.bits)
 
                 self.tableNpArray.append(Table1)
                 self.tableNpArray.append(Table2)
@@ -209,6 +232,12 @@ class TableChart:
             differenceS1S2 = abs(self.genAssemblyObj.source1.reg - self.genAssemblyObj.source2.reg)
             differenceS1D1 = abs(self.genAssemblyObj.source1.reg - self.genAssemblyObj.destination.reg)
             differenceS2D1 = abs(self.genAssemblyObj.destination.reg - self.genAssemblyObj.source2.reg)
+            if self.genAssemblyObj.source1.constant:
+                differenceS1S2 = 0
+                differenceS1D1 = 0
+            elif self.genAssemblyObj.source2.constant:
+                differenceS1S2 = 0
+                differenceS2D1 = 0
             if differenceS2D1 + differenceS1D1 <= 10 or differenceS1S2 + differenceS1D1 <= 10 or differenceS1S2 + differenceS2D1 <= 10:
                 # One huge table
                 startIndex = min(self.genAssemblyObj.source1.reg, self.genAssemblyObj.source2.reg,

@@ -10,8 +10,6 @@ Todo list:
 4. if and else support
 5. check constraint
 6. more widgets options
-7. overlap condition
-8. quad word boundary 
-9. don't display table without reg
 
-how to different source2 and flag???
+7. overlap condition
+

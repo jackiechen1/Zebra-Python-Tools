@@ -1,4 +1,6 @@
 from tkinter import *
+
+import table
 from table import *
 
 ExampleText = """add (8|M0)               r11.0<1>:ud   r7.0<1;1,0>:ud r101.0<1;1,0>:ud
@@ -44,17 +46,21 @@ class GUI:
         for widget in self.command_label.winfo_children():
             widget.destroy()
 
+    def cleanExampleLabels(self):
+        self.example_mode.set(False)
+        self.example_label.config(text="")
+
     def clean(self):
         self.softClean()
         self.text_input.delete("1.0", "end")
-        self.exampleMode = False
+        self.example_mode.set(False)
         self.example_label.config(text="")
 
     def example(self):
         self.clean()
         self.text_input.insert("1.0", ExampleText)  # clean before insert
-        self.exampleMode = True
-        return
+        self.example_mode.set(True)
+        self.visualize()
 
     # Previous command
     def previous(self):
@@ -79,11 +85,13 @@ class GUI:
             widget.destroy()
 
         self.table.AssignNewObj(self.genobjs[self.currentCommand], self.Bytes.get())
-        self.drawBackgroundCanvas()
+
         self.drawRegion()
+        self.drawElementBoundary()
+        self.drawBackgroundCanvas()
         self.displayBitIndex()
         self.UpdateCommandLabel()
-        if self.exampleMode:
+        if self.example_mode.get():
             self.example_label.config(text=ExampleModeLabels[self.currentCommand])
         return
 
@@ -96,8 +104,8 @@ class GUI:
     genobjs = []  # A list of gen Assembly object
     command_labels = []  # A list of list of command labels
     table = TableChart()
-    exampleMode = False
-    RadioFrame = Frame() # Switch bits
+    example_mode = BooleanVar(None, False)
+    RadioFrame = Frame()  # Switch bits
 
     # Label and Text
     text_input = Text(width=int(widths / 12.0),
@@ -123,6 +131,9 @@ class GUI:
     Bytes1 = Radiobutton()
     Bytes2 = Radiobutton()
 
+    # Check Box
+    exampleLabelTurnOff = Checkbutton()
+
     def __init__(self):
         # Initialize windows
         self.createWidgets()
@@ -140,6 +151,10 @@ class GUI:
                                  state=DISABLED)
         self.Bytes1 = Radiobutton(master=self.RadioFrame, text="32 Bytes", variable=self.Bytes, value=32)
         self.Bytes2 = Radiobutton(master=self.RadioFrame, text="64 Bytes", variable=self.Bytes, value=64)
+
+        self.exampleLabelTurnOff = Checkbutton(self.main_window, text='Example label', variable=self.example_mode,
+                                               onvalue=True,
+                                               offvalue=False, command=self.cleanExampleLabels)
 
     def packElements(self):
         self.main_window.title("Gen Assembly Visualize Tool")
@@ -169,14 +184,24 @@ class GUI:
         self.Bytes2.pack()
         self.RadioFrame.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 350)
 
-    # Draw background grey canvas
+        # Checkbox
+        self.exampleLabelTurnOff.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 265)
+
+    # Draw background grey canvas and solid line between elements
     def drawBackgroundCanvas(self):
-        for i in range(15):
-            y = i * self.table.square_height
-            for j in range(self.table.bits):
-                x = j * self.table.square_width
-                self.canvas.create_rectangle(x, y, x + self.table.square_width, y + self.table.square_height,
-                                             fill="#C5c5c5", outline='black')
+        j = 0
+        while j < self.Bytes.get():
+            left = j * self.table.square_width
+            right = (j + self.table.element_size) * self.table.square_width
+            self.canvas.create_rectangle(left, 0, right, 15 * self.table.square_height,
+                                         outline='black')
+            j += self.table.element_size
+
+    def drawHalfRegion(self, x1, y1, x2, y2, fill_color):
+        color1 = colorMap[int(fill_color[0])]
+        color2 = colorMap[int(fill_color[1])]
+        self.canvas.create_rectangle(x1, y1, x2, (y1 + y2) / 2.0, fill=color1, outline='black', width=1, dash=1)
+        self.canvas.create_rectangle(x1, (y1 + y2) / 2.0, x2, y2, fill=color2, outline='black', width=1, dash=1)
 
     # Draw three regions (source1, source2, destination)
     def drawRegion(self):
@@ -187,16 +212,55 @@ class GUI:
             for i in range(M):  # row
                 for j in range(N):  # column
                     fill_color = self.table.tableNpArray[t][i][j]
-                    self.canvas.create_rectangle(self.table.square_width * j,
-                                                 self.table.square_height * (i + 1 + previousRow),
-                                                 self.table.square_width * (j + 1),
-                                                 self.table.square_height * (i + 2 + previousRow),
-                                                 fill=fill_color, outline='black',width=1)
+                    if fill_color != colorMap[4] and fill_color != colorMap[5] and fill_color != colorMap[6]:
+                        self.canvas.create_rectangle(self.table.square_width * j,
+                                                     self.table.square_height * (i + 1 + previousRow),
+                                                     self.table.square_width * (j + 1),
+                                                     self.table.square_height * (i + 2 + previousRow),
+                                                     fill=fill_color, outline='black', width=1, dash=1)
+                    else:
+                        self.drawHalfRegion(self.table.square_width * j,
+                                            self.table.square_height * (i + 1 + previousRow),
+                                            self.table.square_width * (j + 1),
+                                            self.table.square_height * (i + 2 + previousRow),
+                                            fill_color)
+
                 y = (i + 1.5 + previousRow) * self.table.square_height
                 self.regNum = self.canvas.create_text(815, y, text="r" + str(
                     self.table.tableRegNumber[t][0] + i),
                                                       fill='black',
                                                       font=default_font_bold_ital)
+            previousRow += (M + 1)
+
+    def drawElementBoundary(self):
+        tableNumber = self.table.tableRegNumber[0][2]
+        previousRow = 0
+        for t in range(0, tableNumber + 1):
+            M, N = self.table.tableNpArray[t].shape
+            i = 0
+            j = 0
+            while i < M:  # row
+                while j < N:  # column
+                    left = j
+                    if self.table.tableNpArray[t][i][left] == colorMap[1]:  # Source1
+                        OneElementChunk = self.table.genAssemblyObj.source1.datatype
+                    elif self.table.tableNpArray[t][i][left] == colorMap[2]:  # Source2
+                        OneElementChunk = self.table.genAssemblyObj.source2.datatype
+                    elif self.table.tableNpArray[t][i][left] == colorMap[3]:  # Destination
+                        OneElementChunk = self.table.genAssemblyObj.destination.datatype
+                    else:  # background color
+                        OneElementChunk = self.table.element_size
+                    right = j + OneElementChunk
+                    if self.table.tableNpArray[t][i][left] != colorMap[0]:
+                        # top left corner and bottom right corner
+                        self.canvas.create_rectangle(self.table.square_width * left,
+                                                     self.table.square_height * (i + 1 + previousRow),
+                                                     self.table.square_width * right,
+                                                     self.table.square_height * (i + 2 + previousRow),
+                                                     outline='black', width=3)
+                    j = right
+                i += 1
+                j = 0
             previousRow += (M + 1)
 
     # Display the bit index, range from 0 to 32/64, stride by element size
