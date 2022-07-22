@@ -3,7 +3,7 @@
 Last modify by Zhongyi Jiang \
 Web version: https://jackiechen1.github.io/zebratest.github.io/ \
 Todo list:
-1. pre~~di~~ction usage
+1. prediction usage
 2. flag modifier usage
 3. saturation/ source modifier, including - ~ sat abs
 4. if and else support
