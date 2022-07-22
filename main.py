@@ -1,7 +1,7 @@
 from gui import *
 
 
-numberOfBtyes = 32  # 32 bits or 64 bits
+numberOfBytes = 32  # 32 or 64
 
 if __name__ == '__main__':
     MainGui = GUI()

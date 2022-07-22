@@ -14,7 +14,7 @@ ExampleModeLabels = ["This example shows an operation adding 8 elements of r7 an
                      "This example shows the destination (r105) located every other element",
                      "This example shows the destination (r1) adding an offset of one elements",
                      "This example shows the source (r79) changing v,w,h",
-                     "This example changing the data type from double word (32 bits) to word (16 bits)."]
+                     "This example changing the data type from double word (32 bytes) to word (16 bytes)."]
 
 default_font = ("Helvetica", 10)
 default_small_font = ("Helvetica", 8)
@@ -22,6 +22,8 @@ default_font_big = ("Helvetica", 20, "bold")
 default_font_bold_ital = ("Helvetica", 10, "bold", "italic")
 
 table_size_corresponding = {32: default_font, 64: default_small_font, }
+project_list = ["DEFAULT", "ACM", "ACMPLUS", "ADL", "ADLS", "ARL", "ATS", "DG1", "MAR", "MTL", "PVC", "RKLC", "RKLGM",
+                "RLT", "RYF", "SVL", "TGLLP"]
 
 
 class GUI:
@@ -105,7 +107,9 @@ class GUI:
     command_labels = []  # A list of list of command labels
     table = TableChart()
     example_mode = BooleanVar(None, False)
-    RadioFrame = Frame()  # Switch bits
+    RadioFrame = Frame()  # Switch bytes
+
+    project = StringVar(None, "DEFAULT")
 
     # Label and Text
     text_input = Text(width=int(widths / 12.0),
@@ -113,7 +117,8 @@ class GUI:
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
     command_label = Label()  # for demonstrating the command in different color panel
     example_label = Label(text="", fg="black", font=default_font_bold_ital)  # display the example comments
-    Bytes_selection_label = Label(master=RadioFrame, text="Bits select", fg="black", font=default_font)
+    Bytes_selection_label = Label(master=RadioFrame, text="bytes select", fg="black", font=default_font)
+    Project_selection_label = Label(master=main_window, text="Project select", fg="black", font=default_font)
 
     # Button
     visualizeButton = Button()
@@ -133,6 +138,7 @@ class GUI:
 
     # Check Box
     exampleLabelTurnOff = Checkbutton()
+    projectOption = OptionMenu(main_window, project, *project_list)
 
     def __init__(self):
         # Initialize windows
@@ -163,6 +169,7 @@ class GUI:
         self.main_label.pack()
         self.text_input.place(x=200, y=100)
         self.example_label.place(x=int(self.widths / 12.0 * 5), y=self.heights / 2 - 50)
+        self.Project_selection_label.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 350)
 
         # Place Button
         self.visualizeButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 50)
@@ -186,6 +193,7 @@ class GUI:
 
         # Checkbox
         self.exampleLabelTurnOff.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 265)
+        self.projectOption.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 380)
 
     # Draw background grey canvas and solid line between elements
     def drawBackgroundCanvas(self):
@@ -266,12 +274,12 @@ class GUI:
     # Display the bit index, range from 0 to 32/64, stride by element size
     def displayBitIndex(self):
         # Display the bit index
-        for j in range(self.table.bits):
+        for j in range(self.table.bytes):
             if not j % self.table.element_size:
                 x = j * self.table.square_width
-                self.canvas.create_text(x + 10 - (self.table.bits - 32) / 16, 10, text=str(self.table.bits - j - 1),
+                self.canvas.create_text(x + 10 - (self.table.bytes - 32) / 16, 10, text=str(self.table.bytes - j - 1),
                                         fill='black',
-                                        font=table_size_corresponding[self.table.bits])
+                                        font=table_size_corresponding[self.table.bytes])
 
     # Update command label after switching to a new command
     def UpdateCommandLabel(self):
@@ -311,6 +319,8 @@ class GUI:
         self.genobjs, self.command_labels = parse_lines(inputText)
         if not len(self.genobjs):
             return
+        for obj in self.genobjs:
+            CheckConstraint(obj,self.project)
         self.MaxCommand = len(self.genobjs)
         if self.MaxCommand != 1:
             self.nextButton.configure(state=NORMAL)

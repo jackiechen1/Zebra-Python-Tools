@@ -20,8 +20,8 @@ datatype_bytes_conversion = {
 MnemonicList1 = ["mov"]
 MnemonicList2 = ["add", "math.div"]
 conditionValueList = ["ze", "eq", "nz", "ne", "gt", "ge", "lt", "le"]
-
-from main import numberOfBtyes
+largeProjectList = ["PVC", "RLT", "MAR", "DEFAULT"]
+from main import numberOfBytes
 
 
 def ThrowGrammarError(line, error):
@@ -149,7 +149,6 @@ def parseFlagModifier(line, obj):  # Not require
         ThrowGrammarError(line, "Can't parse Flag Modifier")
 
 
-
 def parseDestination(line, obj):
     if not line:
         return ""
@@ -197,14 +196,14 @@ def parseSource(line, obj, order):  # Second source not require
     endIndex = -1
     if regexStart == -1 or leftBracket == -1 or rightBracket == -1 or dotPos == -1 or colon == -1 or semicolon == -1 or comma == -1:
         # Error case
-        if (order==1 and colon==-1) or (order==2 and colon==-1 and obj.mnemonic in MnemonicList1):
+        if (order == 1 and colon == -1) or (order == 2 and colon == -1 and obj.mnemonic in MnemonicList1):
             ThrowGrammarError(line, "Fail to recognize region pattern")
         # No offset input
-        elif dotPos ==-1 and leftBracket!=-1 and regexStart!=-1 and leftBracket-regexStart<=4:
+        elif dotPos == -1 and leftBracket != -1 and regexStart != -1 and leftBracket - regexStart <= 4:
             pass
         # First source is a constant
-        elif order==1 and colon!=-1:
-            obj.source1.constant=True
+        elif order == 1 and colon != -1:
+            obj.source1.constant = True
             if line[colon + 1:colon + 2] in datatype_bytes_conversion.keys():
                 endIndex = colon + 1
             elif line[colon + 1:colon + 3] in datatype_bytes_conversion.keys():
@@ -212,9 +211,9 @@ def parseSource(line, obj, order):  # Second source not require
             else:
                 ThrowGrammarError(line, "Can't recognize datatype")
             return line[endIndex + 1:]
-        elif order==2:
+        elif order == 2:
             # Second source is a constant
-            if colon!=-1 and obj.mnemonic in MnemonicList2:
+            if colon != -1 and obj.mnemonic in MnemonicList2:
                 obj.source2.constant = True
                 if line[colon + 1:colon + 2] in datatype_bytes_conversion.keys():
                     endIndex = colon + 1
@@ -246,7 +245,7 @@ def parseSource(line, obj, order):  # Second source not require
         try:
             if order == 1:
                 # No offset case
-                if dotPos==-1:
+                if dotPos == -1:
                     obj.source1.offset = 0
                     obj.source1.reg = int(line[regexStart + 1: leftBracket])
                 else:
@@ -265,7 +264,7 @@ def parseSource(line, obj, order):  # Second source not require
                     ThrowGrammarError(line, "Can't recognize datatype")
             else:
                 # No offset case
-                if dotPos==-1:
+                if dotPos == -1:
                     obj.source2.offset = 0
                     obj.source2.reg = int(line[regexStart + 1: leftBracket])
                 else:
@@ -309,7 +308,7 @@ def parse_one_line(line, comments):
         return None, None, comments
     elif oneline[0] == '/' and oneline[1] == '*':
         return None, None, True
-    elif oneline.find("*/")!=-1:
+    elif oneline.find("*/") != -1:
         return None, None, False
     elif comments:
         return None, None, True
@@ -346,8 +345,7 @@ def parse_one_line(line, comments):
     if line:
         lineLabel.append(line)
         parseImmediateSourceOperands(line, genAssemblyObj)
-
-    return genAssemblyObj, lineLabel,comments
+    return genAssemblyObj, lineLabel, comments
 
 
 def parse_lines(lines):
@@ -381,36 +379,44 @@ class GenAssembly:
         self.flag = FlagModify()
         self.destination = Destination()
 
-    def CheckConstraint(self):
-        n = max(self.source1.datatype, self.source2.datatype, self.destination.datatype)
-        if self.execinfo.ExecSize * n > 64:
+
+# Check register region restrictions
+# More info in this page: https://gfxspecs.intel.com/Predator/Home/Index/47273
+def CheckConstraint(obj, project):
+    n = max(obj.source1.datatype, obj.source2.datatype, obj.destination.datatype)
+    if project in largeProjectList:
+        if obj.execinfo.ExecSize * n > 128:
+            ThrowErrorMessage(
+                "Where n is the largest element size in bytes for any source or destination operand type, ExecSize * n must be <= 64. For PVC, RLT, MAR,ExecSize * n must be <= 128 ")
+            return
+    else:
+        if obj.execinfo.ExecSize * n > 64:
             ThrowErrorMessage(
                 "Where n is the largest element size in bytes for any source or destination operand type, ExecSize * n must be <= 64. For PVC, RLT, MAR,ExecSize * n must be <= 128 ")
             return
 
-        # When the Execution Data Type is wider than the destination data type, the destination must be aligned as required by the wider execution data type and specify a HorzStride equal to the ratio in sizes of the two data types. For example, a mov with a D source and B destination must use a 4-byte aligned destination and a Dst.HorzStride of 4.
-        # ??? if ExecSize>destination.datatype and destination.H!=destination.datatype/source1.datatype # ratio?
-        def CheckSourceRegion(W, H, V, datatype):
-            # Region restrictions:
-            if self.execinfo.ExecSize < W:
-                ThrowErrorMessage("ExecSize must be greater than or equal to Width.")
-            elif self.execinfo.ExecSize == W and H and V != W * H:
-                ThrowErrorMessage(
-                    "If ExecSize = Width and HorzStride != 0, VertStride must be set to Width * HorzStride.")
-            elif W == 1 and H != 0:
-                ThrowErrorMessage(
-                    "If Width = 1, HorzStride must be 0 regardless of the values of ExecSize and VertStride.")
-            elif self.execinfo.ExecSize == 1 and W == 1 and (V or H):
-                ThrowErrorMessage("If ExecSize = Width = 1, both VertStride and HorzStride must be 0.")
-            elif V == 0 and H == 0 and W != 1:
-                ThrowErrorMessage(
-                    "If VertStride = HorzStride = 0, Width must be 1 regardless of the value of ExecSize.")
-            elif self.destination.H == 0:
-                ThrowErrorMessage("Dst.HorzStride must not be 0.")
-            elif ((self.execinfo.ExecSize / W) * V + self.execinfo.ExecSize % W * H) * datatype > numberOfBtyes * 2:
-                ThrowErrorMessage(" Crossing more than 2 registers")
+    # TODO: When the Execution Data Type is wider than the destination data type, the destination must be aligned as required by the wider execution data type and specify a HorzStride equal to the ratio in sizes of the two data types. For example, a mov with a D source and B destination must use a 4-byte aligned destination and a Dst.HorzStride of 4.
+    def CheckSourceRegion(W, H, V, datatype):
+        # Region restrictions:
+        if obj.execinfo.ExecSize < W:
+            ThrowErrorMessage("ExecSize must be greater than or equal to Width.")
+        elif obj.execinfo.ExecSize == W and H and V != W * H:
+            ThrowErrorMessage(
+                "If ExecSize = Width and HorzStride != 0, VertStride must be set to Width * HorzStride.")
+        elif W == 1 and H != 0:
+            ThrowErrorMessage(
+                "If Width = 1, HorzStride must be 0 regardless of the values of ExecSize and VertStride.")
+        elif obj.execinfo.ExecSize == 1 and W == 1 and (V or H):
+            ThrowErrorMessage("If ExecSize = Width = 1, both VertStride and HorzStride must be 0.")
+        elif V == 0 and H == 0 and W != 1:
+            ThrowErrorMessage(
+                "If VertStride = HorzStride = 0, Width must be 1 regardless of the value of ExecSize.")
+        elif obj.destination.H == 0:
+            ThrowErrorMessage("Dst.HorzStride must not be 0.")
+        elif ((obj.execinfo.ExecSize / W) * V + obj.execinfo.ExecSize % W * H) * datatype > numberOfBytes * 2:
+            ThrowErrorMessage(" Crossing more than 2 registers")
 
-        # ??? VertStride must be used to cross GRF register boundaries. This rule implies that elements within a 'Width' cannot cross GRF boundaries.
-        CheckSourceRegion(self.source1.W, self.source1.H, self.source1.V, self.source1.datatype)
-        CheckSourceRegion(self.source2.W, self.source2.H, self.source2.V, self.source2.datatype)
-    # Project specific
+    # TODO: VertStride must be used to cross GRF register boundaries. This rule implies that elements within a 'Width' cannot cross GRF boundaries.
+    CheckSourceRegion(obj.source1.W, obj.source1.H, obj.source1.V, obj.source1.datatype)
+    CheckSourceRegion(obj.source2.W, obj.source2.H, obj.source2.V, obj.source2.datatype)
+    # TODO: Project specific constriction
