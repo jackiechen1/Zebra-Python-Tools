@@ -100,7 +100,7 @@ class GUI:
             self.example_label.config(text=ExampleModeLabels[self.currentCommand])
         return
 
-    widths = 1500  # widths and heights of Main windows
+    widths = 1100  # widths and heights of Main windows
     heights = 900
     main_window = Tk()
 
@@ -131,7 +131,7 @@ class GUI:
     nextButton = Button()
 
     # Canvas
-    canvas = Canvas(main_window, width=870, height=350, bg="#C5c5c5")
+    canvas = Canvas(main_window, width=widths/1.3, height=heights/900*350, bg="#C5c5c5")
     regNum = canvas.create_text(0, 0, )
 
     # Bytes selection
@@ -170,33 +170,33 @@ class GUI:
 
         # Labels and text
         self.main_label.pack()
-        self.text_input.place(x=200, y=100)
-        self.example_label.place(x=int(self.widths / 12.0 * 5), y=self.heights / 2 - 50)
-        self.Project_selection_label.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 350)
+        self.text_input.place(x=20, y=self.heights/9)
+        self.example_label.place(x=20+int(self.widths / 3.0), y=self.heights / 9*4.0)
+        self.Project_selection_label.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 5.7))
 
         # Place Button
-        self.visualizeButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 50)
-        self.cleanButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 150)
-        self.exampleButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 250)
-        self.previousButton.place(x=50, y=int(self.heights * 3 / 4.0))
-        self.nextButton.place(x=int(self.widths / 12.0 * 10), y=int(self.heights * 3 / 4.0))
+        self.visualizeButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 9))
+        self.cleanButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 5))
+        self.exampleButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 3.5))
+        self.previousButton.place(x=20, y=self.heights*11/12.0)
+        self.nextButton.place(x=self.widths/1.35, y=self.heights*11/12.0)
 
         # Main window
         self.main_window.minsize(width=self.widths, height=self.heights)
-        self.main_window.geometry("+300+100")
+        self.main_window.geometry("+200+100")
 
         # Canvas
-        self.canvas.place(x=200, y=int(self.heights / 2))
+        self.canvas.place(x=20, y=int(self.heights / 2))
 
         # Radios
         self.Bytes_selection_label.pack()
         self.Bytes1.pack()
         self.Bytes2.pack()
-        self.RadioFrame.place(x=int(self.widths / 12.0 * 10), y=int(self.heights / 15.0) + 350)
+        self.RadioFrame.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 12))
 
         # Checkbox
-        self.exampleLabelTurnOff.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 265)
-        self.projectOption.place(x=int(self.widths / 12.0 * 10) + 100, y=int(self.heights / 15.0) + 380)
+        self.exampleLabelTurnOff.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 3.5))
+        self.projectOption.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 5))
 
     # Draw background grey canvas and solid line between elements
     def drawBackgroundCanvas(self):
@@ -314,7 +314,7 @@ class GUI:
             l4.pack(side=LEFT)
             l5.pack(side=LEFT)
 
-        self.command_label.place(x=200, y=self.heights / 2 - 50)
+        self.command_label.place(x=20, y=self.heights / 2 - 50)
 
     # Update command labels
     def updateText(self):
