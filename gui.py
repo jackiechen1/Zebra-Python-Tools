@@ -49,8 +49,11 @@ class GUI:
             widget.destroy()
 
     def cleanExampleLabels(self):
-        self.example_mode.set(False)
-        self.example_label.config(text="")
+        self.example_mode.set(self.example_mode.get())
+        if self.example_mode.get():
+            self.example_label.config(text=ExampleModeLabels[self.currentCommand])
+        else:
+            self.example_label.config(text="")
 
     def clean(self):
         self.softClean()
