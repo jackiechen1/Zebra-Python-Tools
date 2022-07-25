@@ -102,26 +102,34 @@ class GUI:
 
     widths = 1100  # widths and heights of Main windows
     heights = 900
-    main_window = Tk()
 
     currentCommand = 0  # Index of current command
     MaxCommand = 1
     genobjs = []  # A list of gen Assembly object
     command_labels = []  # A list of list of command labels
     table = TableChart()
+    main_window = Tk()
     example_mode = BooleanVar(None, False)
-    RadioFrame = Frame()  # Switch bytes
-
     project = StringVar(None, "DEFAULT")
 
+    # Main window and frames
+    topHalf = Frame(master=main_window, bd=10)
+    topHalfButtons = Frame(master=topHalf, bd=10)
+    topHalfLabels = Frame(master=topHalf, bd=10)
+
+    middlePart = Frame(master=main_window)
+    bottomHalf = Frame(master=main_window)
+    bottomHalfButtons = Frame(master = bottomHalf)
+
     # Label and Text
-    text_input = Text(width=int(widths / 12.0),
+    text_input = Text(master=topHalf, width=int(widths / 12.0),
                       height=int(heights / 40.0))
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
-    command_label = Label()  # for demonstrating the command in different color panel
-    example_label = Label(text="", fg="black", font=default_font_bold_ital)  # display the example comments
-    Bytes_selection_label = Label(master=RadioFrame, text="bytes select", fg="black", font=default_font)
-    Project_selection_label = Label(master=main_window, text="Project select", fg="black", font=default_font)
+    command_label = Frame(master=middlePart)  # for demonstrating the command in different color panel
+    example_label = Label(master=middlePart, text="", fg="black",
+                          font=default_font_big)  # display the example comments
+    Bytes_selection_label = Label(master=topHalfLabels, text="bytes select", fg="black", font=default_font)
+    Project_selection_label = Label(master=topHalfLabels, text="Project select", fg="black", font=default_font)
 
     # Button
     visualizeButton = Button()
@@ -131,8 +139,7 @@ class GUI:
     nextButton = Button()
 
     # Canvas
-    canvas = Canvas(main_window, width=widths/1.3, height=heights/900*350, bg="#C5c5c5")
-    regNum = canvas.create_text(0, 0, )
+    canvas = Canvas(bottomHalf, width=widths / 1.3, height=heights / 900 * 350, bg="#C5c5c5")
 
     # Bytes selection
     Bytes = IntVar(None, 32)
@@ -141,7 +148,8 @@ class GUI:
 
     # Check Box
     exampleLabelTurnOff = Checkbutton()
-    projectOption = OptionMenu(main_window, project, *project_list)
+    projectOption = OptionMenu(topHalfLabels, project, *project_list)
+    regNum = canvas.create_text(0, 0, )
 
     def __init__(self):
         # Initialize windows
@@ -149,54 +157,68 @@ class GUI:
         return
 
     def createWidgets(self):
-        self.visualizeButton = Button(text="Visualize", width=8, height=2, command=self.visualize, relief=RAISED,
+        self.visualizeButton = Button(master=self.topHalfButtons, text="Visualize", width=8, height=2,
+                                      command=self.visualize, relief=RAISED,
                                       borderwidth=5)
-        self.cleanButton = Button(text="Clean", width=8, height=2, command=self.clean, relief=RAISED, borderwidth=5)
-        self.exampleButton = Button(text="Example", width=8, height=2, command=self.example, relief=RAISED,
+        self.cleanButton = Button(master=self.topHalfButtons, text="Clean", width=8, height=2, command=self.clean,
+                                  relief=RAISED, borderwidth=5)
+        self.exampleButton = Button(master=self.topHalfButtons, text="Example", width=8, height=2, command=self.example,
+                                    relief=RAISED,
                                     borderwidth=5)
-        self.previousButton = Button(text="Previous", width=8, height=2, command=self.previous, relief=RAISED,
+        self.previousButton = Button(master=self.bottomHalfButtons, text="Previous", width=8, height=2, command=self.previous,
+                                     relief=RAISED,
                                      borderwidth=5, state=DISABLED)
-        self.nextButton = Button(text="Next", width=8, height=2, command=self.next, relief=RAISED, borderwidth=5,
+        self.nextButton = Button(master=self.bottomHalfButtons, text="Next", width=8, height=2, command=self.next,
+                                 relief=RAISED, borderwidth=5,
                                  state=DISABLED)
-        self.Bytes1 = Radiobutton(master=self.RadioFrame, text="32 Bytes", variable=self.Bytes, value=32)
-        self.Bytes2 = Radiobutton(master=self.RadioFrame, text="64 Bytes", variable=self.Bytes, value=64)
+        self.Bytes1 = Radiobutton(master=self.topHalfLabels, text="32 Bytes", variable=self.Bytes, value=32)
+        self.Bytes2 = Radiobutton(master=self.topHalfLabels, text="64 Bytes", variable=self.Bytes, value=64)
 
-        self.exampleLabelTurnOff = Checkbutton(self.main_window, text='Example label', variable=self.example_mode,
+        self.exampleLabelTurnOff = Checkbutton(master=self.topHalfLabels, text='Example label',
+                                               variable=self.example_mode,
                                                onvalue=True,
                                                offvalue=False, command=self.cleanExampleLabels)
 
     def packElements(self):
         self.main_window.title("Gen Assembly Visualize Tool")
 
-        # Labels and text
-        self.main_label.pack()
-        self.text_input.place(x=20, y=self.heights/9)
-        self.example_label.place(x=20+int(self.widths / 3.0), y=self.heights / 9*4.0)
-        self.Project_selection_label.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 5.7))
+        # pack Buttons
+        self.visualizeButton.pack(side=TOP, pady=20)
+        self.cleanButton.pack(side=TOP, pady=20)
+        self.exampleButton.pack(side=TOP, pady=20)
 
-        # Place Button
-        self.visualizeButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 9))
-        self.cleanButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 5))
-        self.exampleButton.place(x=int(self.widths / 12.0*8), y=int(self.heights / 3.5))
-        self.previousButton.place(x=20, y=self.heights*11/12.0)
-        self.nextButton.place(x=self.widths/1.35, y=self.heights*11/12.0)
+        # pack top labels
+        self.Bytes_selection_label.pack(side=TOP, pady=10)
+        self.Bytes1.pack(side=TOP)
+        self.Bytes2.pack(side=TOP)
+        self.Project_selection_label.pack(side=TOP, pady=10)
+        self.projectOption.pack(side=TOP)
+        self.exampleLabelTurnOff.pack(side=TOP, pady=20)
+
+        # pack top half
+        self.text_input.pack(side=LEFT)
+        self.topHalfButtons.pack(side=LEFT)
+        self.topHalfLabels.pack(side=LEFT)
+
+        # pack middle section
+        self.command_label.pack()
+        self.example_label.pack()
+
+        # pack buttom section
+        self.canvas.pack(side=TOP)
+        self.previousButton.pack(side = LEFT,padx = 200)
+        self.nextButton.pack(side = RIGHT,padx = 200)
+        self.bottomHalfButtons.pack()
+
+        # pack all frames
+        self.main_label.pack()
+        self.topHalf.pack()
+        self.middlePart.pack()
+        self.bottomHalf.pack()
 
         # Main window
         self.main_window.minsize(width=self.widths, height=self.heights)
         self.main_window.geometry("+200+100")
-
-        # Canvas
-        self.canvas.place(x=20, y=int(self.heights / 2))
-
-        # Radios
-        self.Bytes_selection_label.pack()
-        self.Bytes1.pack()
-        self.Bytes2.pack()
-        self.RadioFrame.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 12))
-
-        # Checkbox
-        self.exampleLabelTurnOff.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 3.5))
-        self.projectOption.place(x=int(self.widths / 12.0 * 9.5), y=int(self.heights / 5))
 
     # Draw background grey canvas and solid line between elements
     def drawBackgroundCanvas(self):
@@ -291,30 +313,32 @@ class GUI:
         # data[2] source1
         # data[3] source2 --option
         # data[4] other modification flag --option
+
+        # Clean command label frame
+        for widget in self.command_label.winfo_children():
+            widget.destroy()
         data = self.command_labels[self.currentCommand]
-        self.command_label = Frame(master=self.main_window)
-        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_bold_ital)
-        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_bold_ital)
-        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_bold_ital)
+        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_big)
+        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_big)
+        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_big)
 
         l1.pack(side=LEFT)
         l2.pack(side=LEFT)
         l3.pack(side=LEFT)
 
         if len(data) > 3 and not self.table.genAssemblyObj.immediateSourceOperands:  # additional source2
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_big)
             l4.pack(side=LEFT)
         elif len(
                 data) == 4 and self.table.genAssemblyObj.immediateSourceOperands:  # no source2 but have immediate Source Operands
-            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_big)
             l4.pack(side=LEFT)
         else:  # source2 and immediate flag
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
-            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_big)
+            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_big)
             l4.pack(side=LEFT)
             l5.pack(side=LEFT)
 
-        self.command_label.place(x=20, y=self.heights / 2 - 50)
 
     # Update command labels
     def updateText(self):
@@ -323,7 +347,7 @@ class GUI:
         if not len(self.genobjs):
             return
         for obj in self.genobjs:
-            CheckConstraint(obj,self.project)
+            CheckConstraint(obj, self.project)
         self.MaxCommand = len(self.genobjs)
         if self.MaxCommand != 1:
             self.nextButton.configure(state=NORMAL)
