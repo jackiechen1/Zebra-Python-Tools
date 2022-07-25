@@ -218,7 +218,7 @@ class GUI:
 
         # Main window
         self.main_window.minsize(width=self.widths, height=self.heights)
-        self.main_window.geometry("+200+100")
+        self.main_window.geometry("+200+0")
 
     # Draw background grey canvas and solid line between elements
     def drawBackgroundCanvas(self):
