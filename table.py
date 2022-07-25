@@ -142,8 +142,8 @@ def sortTable(tableArray, tableParameter):
 class TableChart:
     element_size = 4  # unit in bytes
     bytes = 32
-    square_width = 25  # if 64 width = 12.5
-    square_height = 25
+    square_width = 20  # if 64 width = 12.5
+    square_height = 20
     tableNpArray = []  # contain the numpy array list
     tableRegNumber = []  # contain a list of tuple of start reg, end index reg, # of table remain
     genAssemblyObj = GenAssembly()
@@ -161,9 +161,9 @@ class TableChart:
         self.numberOfSource = 1
         self.bytes = bytes
         if self.bytes == 64:
-            self.square_width = 12.5
+            self.square_width = 10
         else:
-            self.square_width = 25
+            self.square_width = 20
         
         self.genAssemblyObj = genObj
         self.element_size = max(genObj.source1.datatype, genObj.source2.datatype,

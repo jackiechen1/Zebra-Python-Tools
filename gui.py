@@ -20,7 +20,7 @@ default_font = ("Helvetica", 10)
 default_small_font = ("Helvetica", 8)
 default_font_big = ("Helvetica", 20, "bold")
 default_font_bold_ital = ("Helvetica", 10, "bold", "italic")
-
+default_font_bold = ("Helvetica", 10, "bold")
 table_size_corresponding = {32: default_font, 64: default_small_font, }
 project_list = ["DEFAULT", "ACM", "ACMPLUS", "ADL", "ADLS", "ARL", "ATS", "DG1", "MAR", "MTL", "PVC", "RKLC", "RKLGM",
                 "RLT", "RYF", "SVL", "TGLLP"]
@@ -113,9 +113,9 @@ class GUI:
     project = StringVar(None, "DEFAULT")
 
     # Main window and frames
-    topHalf = Frame(master=main_window, bd=10)
+    topHalf = Frame(master=main_window, bd=5)
     topHalfButtons = Frame(master=topHalf, bd=10)
-    topHalfLabels = Frame(master=topHalf, bd=10)
+    topHalfLabels = Frame(master=topHalf)
 
     middlePart = Frame(master=main_window)
     bottomHalf = Frame(master=main_window)
@@ -123,11 +123,11 @@ class GUI:
 
     # Label and Text
     text_input = Text(master=topHalf, width=int(widths / 12.0),
-                      height=int(heights / 40.0))
+                      height=int(heights / 60.0))
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
     command_label = Frame(master=middlePart)  # for demonstrating the command in different color panel
     example_label = Label(master=middlePart, text="", fg="black",
-                          font=default_font_big)  # display the example comments
+                          font=default_font_bold_ital)  # display the example comments
     Bytes_selection_label = Label(master=topHalfLabels, text="bytes select", fg="black", font=default_font)
     Project_selection_label = Label(master=topHalfLabels, text="Project select", fg="black", font=default_font)
 
@@ -139,7 +139,7 @@ class GUI:
     nextButton = Button()
 
     # Canvas
-    canvas = Canvas(bottomHalf, width=widths / 1.3, height=heights / 900 * 350, bg="#C5c5c5")
+    canvas = Canvas(bottomHalf, width=widths / 1.5, height=heights / 3, bg="#C5c5c5")
 
     # Bytes selection
     Bytes = IntVar(None, 32)
@@ -183,12 +183,12 @@ class GUI:
         self.main_window.title("Gen Assembly Visualize Tool")
 
         # pack Buttons
-        self.visualizeButton.pack(side=TOP, pady=20)
-        self.cleanButton.pack(side=TOP, pady=20)
-        self.exampleButton.pack(side=TOP, pady=20)
+        self.visualizeButton.pack(side=TOP, pady=10)
+        self.cleanButton.pack(side=TOP, pady=10)
+        self.exampleButton.pack(side=TOP, pady=10)
 
         # pack top labels
-        self.Bytes_selection_label.pack(side=TOP, pady=10)
+        self.Bytes_selection_label.pack(side=TOP)
         self.Bytes1.pack(side=TOP)
         self.Bytes2.pack(side=TOP)
         self.Project_selection_label.pack(side=TOP, pady=10)
@@ -259,7 +259,7 @@ class GUI:
                                             fill_color)
 
                 y = (i + 1.5 + previousRow) * self.table.square_height
-                self.regNum = self.canvas.create_text(815, y, text="r" + str(
+                self.regNum = self.canvas.create_text(self.widths/1.68, y, text="r" + str(
                     self.table.tableRegNumber[t][0] + i),
                                                       fill='black',
                                                       font=default_font_bold_ital)
@@ -318,24 +318,24 @@ class GUI:
         for widget in self.command_label.winfo_children():
             widget.destroy()
         data = self.command_labels[self.currentCommand]
-        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_big)
-        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_big)
-        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_big)
+        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_bold_ital)
+        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_bold_ital)
+        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_bold_ital)
 
         l1.pack(side=LEFT)
         l2.pack(side=LEFT)
         l3.pack(side=LEFT)
 
         if len(data) > 3 and not self.table.genAssemblyObj.immediateSourceOperands:  # additional source2
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_big)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
             l4.pack(side=LEFT)
         elif len(
                 data) == 4 and self.table.genAssemblyObj.immediateSourceOperands:  # no source2 but have immediate Source Operands
-            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_big)
+            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_bold_ital)
             l4.pack(side=LEFT)
         else:  # source2 and immediate flag
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_big)
-            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_big)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
+            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_bold_ital)
             l4.pack(side=LEFT)
             l5.pack(side=LEFT)
 
