@@ -1,4 +1,5 @@
 from tkinter import messagebox
+from main import numberOfBytes
 
 datatype_bytes_conversion = {
     "b": 1,
@@ -17,11 +18,13 @@ datatype_bytes_conversion = {
     "vf": 0
 }
 
+# Mnemonic needs one source
 MnemonicList1 = ["mov"]
+
+# Mnemonic needs two sources
 MnemonicList2 = ["add", "math.div"]
 conditionValueList = ["ze", "eq", "nz", "ne", "gt", "ge", "lt", "le"]
 largeProjectList = ["PVC", "RLT", "MAR", "DEFAULT"]
-from main import numberOfBytes
 
 
 def ThrowGrammarError(line, error):
@@ -51,7 +54,7 @@ class Source:
         self.V = -1  # Vertical stride
         self.W = -1  # Width
         self.H = -1  # Horizontal stride
-        self.datatype = -1  # units in bits
+        self.datatype = -1  # units in bytes
 
 
 class Destination:
@@ -60,7 +63,7 @@ class Destination:
     reg = 1  # reg number
     offset = 0  # aka S
     H = 1  # Horizontal stride
-    datatype = 32  # units in bits
+    datatype = 32  # units in bytes
 
     def __init__(self):
         self.modifiers = ''  # Source modifiers could be -,~,abs,sat and so on

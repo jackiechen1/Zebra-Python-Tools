@@ -1,18 +1,6 @@
 from tkinter import *
 from table import *
-
-ExampleText = """add (8|M0)               r11.0<1>:ud   r7.0<1;1,0>:ud r101.0<1;1,0>:ud
-mov (16|M0)               r120.0<1>:ud   r127.0<1;1,0>:ud
-mov (8|M0)               r105.0<2>:ud   r70.0<1;1,0>:ud
-mov (8|M0)               r1.1<2>:ud   r5.0<1;1,0>:ud
-mov (8|M0)               r13.0<1>:ud   r79.0<4;4,2>:ud
-mov (8|M0)               r16.0<1>:uw   r13.0<8;8,1>:uw"""
-ExampleModeLabels = ["This example shows an operation adding 8 elements of r7 and r101 to r11",
-                     "This example shows moving 16 elements from r127 to r120",
-                     "This example shows the destination (r105) located every other element",
-                     "This example shows the destination (r1) adding an offset of one elements",
-                     "This example shows the source (r79) changing v,w,h",
-                     "This example changing the data type from double word (32 bytes) to word (16 bytes)."]
+from example import *
 
 default_font = ("Helvetica", 10)
 default_small_font = ("Helvetica", 8)
@@ -117,7 +105,7 @@ class GUI:
 
     middlePart = Frame(master=main_window)
     bottomHalf = Frame(master=main_window)
-    bottomHalfButtons = Frame(master = bottomHalf)
+    bottomHalfButtons = Frame(master=bottomHalf)
 
     # Label and Text
     text_input = Text(master=topHalf, width=int(widths / 12.0),
@@ -125,7 +113,7 @@ class GUI:
     main_label = Label(text="Gen Assembly Visualize tool 1.0", font=default_font_big)
     command_label = Frame(master=middlePart)  # for demonstrating the command in different color panel
     example_label = Label(master=middlePart, text="", fg="black",
-                          font=default_font_bold_ital)  # display the example comments
+                          font=default_font_bold)  # display the example comments
     Bytes_selection_label = Label(master=topHalfLabels, text="bytes select", fg="black", font=default_font)
     Project_selection_label = Label(master=topHalfLabels, text="Project select", fg="black", font=default_font)
 
@@ -163,7 +151,8 @@ class GUI:
         self.exampleButton = Button(master=self.topHalfButtons, text="Example", width=8, height=2, command=self.example,
                                     relief=RAISED,
                                     borderwidth=5)
-        self.previousButton = Button(master=self.bottomHalfButtons, text="Previous", width=8, height=2, command=self.previous,
+        self.previousButton = Button(master=self.bottomHalfButtons, text="Previous", width=8, height=2,
+                                     command=self.previous,
                                      relief=RAISED,
                                      borderwidth=5, state=DISABLED)
         self.nextButton = Button(master=self.bottomHalfButtons, text="Next", width=8, height=2, command=self.next,
@@ -204,8 +193,8 @@ class GUI:
 
         # pack buttom section
         self.canvas.pack(side=TOP)
-        self.previousButton.pack(side = LEFT,padx = 200)
-        self.nextButton.pack(side = RIGHT,padx = 200)
+        self.previousButton.pack(side=LEFT, padx=200)
+        self.nextButton.pack(side=RIGHT, padx=200)
         self.bottomHalfButtons.pack()
 
         # pack all frames
@@ -257,10 +246,10 @@ class GUI:
                                             fill_color)
 
                 y = (i + 1.5 + previousRow) * self.table.square_height
-                self.regNum = self.canvas.create_text(self.widths/1.68, y, text="r" + str(
+                self.regNum = self.canvas.create_text(self.widths / 1.68, y, text="r" + str(
                     self.table.tableRegNumber[t][0] + i),
                                                       fill='black',
-                                                      font=default_font_bold_ital)
+                                                      font=default_font_bold)
             previousRow += (M + 1)
 
     def drawElementBoundary(self):
@@ -316,27 +305,26 @@ class GUI:
         for widget in self.command_label.winfo_children():
             widget.destroy()
         data = self.command_labels[self.currentCommand]
-        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_bold_ital)
-        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_bold_ital)
-        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_bold_ital)
+        l1 = Label(master=self.command_label, text=data[0], fg="black", font=default_font_bold)
+        l2 = Label(master=self.command_label, text=data[1], fg=colorMap[3], font=default_font_bold)
+        l3 = Label(master=self.command_label, text=data[2], fg=colorMap[1], font=default_font_bold)
 
         l1.pack(side=LEFT)
         l2.pack(side=LEFT)
         l3.pack(side=LEFT)
 
         if len(data) > 3 and not self.table.genAssemblyObj.immediateSourceOperands:  # additional source2
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold)
             l4.pack(side=LEFT)
         elif len(
                 data) == 4 and self.table.genAssemblyObj.immediateSourceOperands:  # no source2 but have immediate Source Operands
-            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg="black", font=default_font_bold)
             l4.pack(side=LEFT)
         else:  # source2 and immediate flag
-            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold_ital)
-            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_bold_ital)
+            l4 = Label(master=self.command_label, text=data[3], fg=colorMap[2], font=default_font_bold)
+            l5 = Label(master=self.command_label, text=data[4], fg="black", font=default_font_bold)
             l4.pack(side=LEFT)
             l5.pack(side=LEFT)
-
 
     # Update command labels
     def updateText(self):

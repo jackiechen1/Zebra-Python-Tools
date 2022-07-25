@@ -54,21 +54,21 @@ def AssignArray(ExecSize, s, v, w, h, t, table, bytes, row, SourceOrDestination)
         left_index = right_index - t
         temp_table = table[row + rowPos, left_index:right_index]
         if SourceOrDestination == 1:  # Source1 case ---check conflict before assigning values---
-            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
-                temp_table = np.where(temp_table == colorMap[1], colorMap[SourceOrDestination],temp_table)
+                temp_table = np.where(temp_table == colorMap[1], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
                 temp_table = np.where(temp_table == colorMap[2],
                                       colorMap[4], colorMap[6])
         elif SourceOrDestination == 2:  # Source2 case
-            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
                 temp_table = np.where(temp_table == colorMap[2], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
                 temp_table = np.where(temp_table == colorMap[1],
                                       colorMap[4], colorMap[6])
-        else: # Destination case
-            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination],temp_table)
+        else:  # Destination case
+            temp_table = np.where(temp_table == colorMap[0], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
                 temp_table = np.where(temp_table == colorMap[3], colorMap[SourceOrDestination], temp_table)
             if colorMap[SourceOrDestination] not in temp_table:
@@ -103,7 +103,7 @@ def sortTable(tableArray, tableParameter):
     def simpleSwap(swapList, pos1, pos2, reg):
         get = swapList[pos1], swapList[pos2]
         swapList[pos2], swapList[pos1] = get
-        if reg:  # keep the regeister table index
+        if reg:  # keep the register table index
             reg1 = swapList[pos2][2]
             swapList[pos2][2] = swapList[pos1][2]
             swapList[pos1][2] = reg1
@@ -164,11 +164,11 @@ class TableChart:
             self.square_width = 10
         else:
             self.square_width = 20
-        
+
         self.genAssemblyObj = genObj
         self.element_size = max(genObj.source1.datatype, genObj.source2.datatype,
                                 genObj.destination.datatype)
-        if not genObj.source2.constant and genObj.source2.datatype!=-1:
+        if not genObj.source2.constant and genObj.source2.datatype != -1:
             self.numberOfSource = 2
 
         # Prevent any other cases
